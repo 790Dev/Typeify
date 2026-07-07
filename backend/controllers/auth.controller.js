@@ -34,7 +34,12 @@ const registerUser = asyncHandler(async (req, res) => {
   });
 
   if (existedUser) {
-    throw new ApiError(409, "User with email or username already exists");
+    if (existedUser.isEmailVerified) {
+      throw new ApiError(409, "User with email or username already exists");
+    } else {
+      // The user is unverified. Delete their old record so they can try signing up again.
+      await User.findByIdAndDelete(existedUser._id);
+    }
   }
 
   const user = await User.create({
