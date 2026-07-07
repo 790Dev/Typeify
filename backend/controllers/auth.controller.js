@@ -63,7 +63,7 @@ const registerUser = asyncHandler(async (req, res) => {
   } catch (error) {
     // Rollback: delete the user from database if email sending fails
     await User.findByIdAndDelete(user._id);
-    throw new ApiError(500, "Failed to send verification email. Your account was not created. Please try again.");
+    throw new ApiError(500, `Failed to send verification email. EXACT ERROR: ${error.message}`);
   }
 
   const createdUser = await User.findById(user._id).select(
