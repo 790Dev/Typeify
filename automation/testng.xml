@@ -1,0 +1,7 @@
+<suite name="Typeify Suite">
+  <test name="UI Tests">
+    <classes>
+      <class name="tests.TypeifyFlowTest"/>
+    </classes>
+  </test>
+</suite>

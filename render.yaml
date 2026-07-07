@@ -1,0 +1,25 @@
+# Render Blueprint for the Typeify backend.
+# In Render: New → Blueprint → connect this repo. Then fill in the
+# env vars marked sync:false in the dashboard (they are not committed).
+services:
+  - type: web
+    name: typeify-backend
+    runtime: node
+    rootDir: backend
+    plan: free
+    buildCommand: npm install
+    startCommand: node server.js
+    healthCheckPath: /api/scores?duration=30
+    envVars:
+      - key: JWT_SECRET
+        generateValue: true
+      - key: MONGO_URI
+        sync: false
+      - key: BREVO_API_KEY
+        sync: false
+      - key: EMAIL_FROM
+        sync: false
+      - key: EMAIL_FROM_NAME
+        sync: false
+      - key: GROQ_API_KEY
+        sync: false

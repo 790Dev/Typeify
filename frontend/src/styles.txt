@@ -1,0 +1,166 @@
+import React from "react";
+import "./App.css";
+
+import RestartButton from "./components/RestartButton";
+import Results from "./components/Results";
+import TypingChart from "./components/TypingChart";
+import { calculateAccuracyPercentage, formatPercentage } from "./utilty/helper";
+import UserTypings from "./components/UserTypings";
+import UseEngine from "./hooks/UseEngine";
+
+function App() {
+  const GeneratedWords = ({ words }) => {
+    return <div className="text-slate-500">{words} </div>;
+  };
+
+  const CountdownTimer = ({ timeLeft }) => {
+    return <h2 className="text-yellow-500 font-medium">Time : {timeLeft}</h2>;
+  };
+
+  const WordsContainer = ({ children }) => {
+    return (
+      <div className="relative text-4xl max-w-4xl leading-relaxed break-all mt-3">
+        {children}
+      </div>
+    );
+  };
+
+  const {
+    state,
+    words,
+    timeLeft,
+    typed,
+    errors,
+    restart,
+    totalTyped,
+    wpmHistory,
+    countdownSeconds,
+  } = UseEngine();
+
+  return (
+    <>
+      {state !== "finish" ? (
+        <>
+          <CountdownTimer timeLeft={timeLeft} />
+
+          <WordsContainer>
+            <GeneratedWords words={words} />
+            <UserTypings
+              className="absolute inset-0"
+              userInput={typed}
+              words={words}
+            />
+          </WordsContainer>
+
+          <RestartButton
+            className="mx-auto mt-10 text-slate-500 "
+            onRestart={restart}
+          />
+
+          <Results
+            state={state}
+            className="mt-10"
+            errors={errors}
+            accuracyPercentage={formatPercentage(
+              calculateAccuracyPercentage(errors, totalTyped)
+            )}
+            total={totalTyped}
+          />
+        </>
+      ) : (
+        <TypingChart
+          wpmData={wpmHistory}
+          errors={errors}
+          totalTyped={totalTyped}
+          accuracy={Math.round(calculateAccuracyPercentage(errors, totalTyped))}
+          totalTime={countdownSeconds}
+          onRestart={restart}
+        />
+      )}
+    </>
+  );
+}
+
+export default App;
+
+
+
+
+
+useword file 
+import React from 'react'
+import { faker } from '@faker-js/faker'
+import { useCallback,useState } from 'react'
+
+const generatedWords = (count) => {
+    return faker.word.words(count).toLowerCase();
+} 
+
+const UseWords = (count) => {
+
+    const [words,setWords] = useState(generatedWords(count));
+
+    const updateWords = useCallback( () => {
+        setWords(generatedWords(count))
+    }, [count] )
+
+    return {words,updateWords}
+
+}
+
+export default UseWords
+
+
+
+UseCountdownfile
+import React, { useEffect } from 'react'
+import { useCallback,useRef,useState } from 'react'
+
+const UseContdownTimer = (seconds) => {
+    const [timeLeft,setTimeLeft] = useState(seconds);
+    const intervalRef = useRef(null);
+
+
+    const startCountdown = useCallback(()=>{
+        
+        console.log('Starting countdown...');
+
+        intervalRef.current = setInterval(()=>{
+            setTimeLeft((timeLeft)=>timeLeft-1)
+        },1000)
+        
+        
+    },[setTimeLeft])
+
+    const resetCountdown = useCallback( ()=>{
+        console.log('reseting countdown');
+
+        if(intervalRef.current){
+            clearInterval(intervalRef.current)
+        }
+        
+        setTimeLeft(seconds);
+        
+    },[seconds])
+
+
+    useEffect(()=>{
+        
+        if(!timeLeft && intervalRef.current){
+            console.log("Clearing timer...");
+            
+            clearInterval(intervalRef.current)
+        }
+
+    },[timeLeft,intervalRef])
+
+
+    return {timeLeft,startCountdown,resetCountdown};
+
+
+  
+    
+}
+
+
+export default UseContdownTimer

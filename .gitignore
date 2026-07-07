@@ -1,0 +1,10 @@
+# Selenium/TestNG
+automation/target/
+automation/test-output/
+*.class
+
+node_modules/
+build/
+dist/
+.env
+.DS_Store

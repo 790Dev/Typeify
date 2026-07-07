@@ -1,0 +1,129 @@
+import React, { useState } from "react";
+import "./App.css";
+import RestartButton from "./components/RestartButton";
+import Results from "./components/Results";
+import TypingChart from "./components/TypingChart";
+import ModeSelector from "./components/ModeSelector";
+import { calculateAccuracyPercentage } from "./utilty/helper";
+import UserTypings from "./components/UserTypings";
+import UseEngine from "./hooks/UseEngine";
+
+function App() {
+  const [selectedTime, setSelectedTime] = useState(30);
+  const [selectedWordCount, setSelectedWordCount] = useState(25);
+  const [mode, setMode] = useState("time");
+  const [includePunctuation, setIncludePunctuation] = useState(false);
+  const [includeNumbers, setIncludeNumbers] = useState(false);
+  const [engineKey, setEngineKey] = useState(0);
+
+  const GeneratedWords = ({ words }) => {
+    return <div className="text-slate-400">{words}</div>;
+  };
+
+  const WordsContainer = ({ children }) => {
+    return (
+      <div className="relative max-w-xl mt-3 text-3xl leading-relaxed break-all">
+        {children}
+      </div>
+    );
+  };
+
+  const {
+    state,
+    words,
+    timeLeft,
+    typed,
+    errors,
+    restart,
+    totalTyped,
+    wpmHistory,
+  } = UseEngine(
+    mode === "time" ? selectedTime : selectedWordCount,
+    mode,
+    includePunctuation,
+    includeNumbers
+  );
+
+  const handleTimeChange = (time) => {
+    console.log("Time changed to:", time);
+    setSelectedTime(time);
+    setEngineKey((prev) => prev + 1);
+  };
+
+  const handleWordCountChange = (wordCount) => {
+    console.log("Word count changed to:", wordCount);
+    setSelectedWordCount(wordCount);
+    setEngineKey((prev) => prev + 1);
+  };
+
+  const handleModeChange = (newMode) => {
+    console.log("Mode changed to:", newMode);
+    setMode(newMode);
+    setEngineKey((prev) => prev + 1);
+  };
+
+  const handlePunctuationChange = (enabled) => {
+    console.log("Punctuation changed to:", enabled);
+    setIncludePunctuation(enabled);
+    setEngineKey((prev) => prev + 1);
+  };
+
+  const handleNumbersChange = (enabled) => {
+    console.log("Numbers changed to:", enabled);
+    setIncludeNumbers(enabled);
+    setEngineKey((prev) => prev + 1);
+  };
+
+  return (
+    <div key={engineKey}>
+      {state !== "finish" ? (
+        <>
+          <ModeSelector
+            onPunctuationChange={handlePunctuationChange}
+            onNumbersChange={handleNumbersChange}
+            onTimeChange={handleTimeChange}
+            onWordCountChange={handleWordCountChange}
+            onModeChange={handleModeChange}
+            selectedTime={selectedTime}
+            selectedWordCount={selectedWordCount}
+            isPunctuationEnabled={includePunctuation}
+            isNumbersEnabled={includeNumbers}
+            mode={mode}
+          />
+
+          {/* No time or words display - directly show the words container */}
+          <WordsContainer>
+            <GeneratedWords words={words} />
+            <UserTypings
+              className="absolute inset-0"
+              words={words}
+              userInput={typed}
+            />
+          </WordsContainer>
+          <RestartButton
+            className={"mx-auto mt-10 text-slate-500"}
+            onRestart={restart}
+          />
+        </>
+      ) : (
+        <Results
+          state={state}
+          errors={errors}
+          accuracyPercentage={calculateAccuracyPercentage(errors, totalTyped)}
+          total={totalTyped}
+          className="mt-10"
+          wpmHistory={wpmHistory}
+          restart={restart}
+          mode={mode}
+          selectedTime={selectedTime}
+          selectedWordCount={selectedWordCount}
+        />
+      )}
+      {state === "finish" && wpmHistory.length > 0 && (
+        <TypingChart wpmHistory={wpmHistory} />
+      )}
+    </div>
+  );
+}
+
+export default App;
