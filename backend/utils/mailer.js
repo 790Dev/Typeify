@@ -1,4 +1,4 @@
-import nodemailer from "nodemailer";
+const BREVO_ENDPOINT = "https://api.brevo.com/v3/smtp/email";
 
 const emailHtml = (intro, link, buttonText) => `
   <div style="background:#0e1116;padding:40px 0;font-family:'Segoe UI',Arial,sans-serif">
@@ -15,39 +15,33 @@ const emailHtml = (intro, link, buttonText) => `
   </div>`;
 
 const send = async ({ to, subject, intro, link, buttonText }) => {
-  const { BREVO_SMTP_HOST, BREVO_SMTP_PORT, BREVO_SMTP_USER, BREVO_SMTP_PASS, EMAIL_FROM_NAME, EMAIL_FROM } = process.env;
+  const { BREVO_API_KEY, EMAIL_FROM } = process.env;
   
-  if (!BREVO_SMTP_HOST || !BREVO_SMTP_USER) {
+  if (!BREVO_API_KEY || !EMAIL_FROM) {
     throw new Error(
-      "Email is not configured. Set BREVO_SMTP_ variables in backend/.env",
+      "Email is not configured. Set BREVO_API_KEY and EMAIL_FROM (verified Brevo sender) in backend/.env",
     );
   }
 
-  const transporter = nodemailer.createTransport({
-    host: BREVO_SMTP_HOST,
-    port: Number(BREVO_SMTP_PORT) || 587,
-    secure: Number(BREVO_SMTP_PORT) === 465, // true for 465, false for 587
-    connectionTimeout: 10000, // fail after 10 seconds instead of hanging forever
-    auth: {
-      user: BREVO_SMTP_USER,
-      pass: BREVO_SMTP_PASS,
+  const res = await fetch(BREVO_ENDPOINT, {
+    method: "POST",
+    headers: {
+      "api-key": BREVO_API_KEY.trim(),
+      "content-type": "application/json",
+      accept: "application/json",
     },
+    body: JSON.stringify({
+      sender: { name: process.env.EMAIL_FROM_NAME || "Typeify", email: EMAIL_FROM },
+      to: [{ email: to }],
+      subject,
+      textContent: `${intro.replace(/<[^>]*>/g, "")} Link: ${link}. It expires in 10 minutes.`,
+      htmlContent: emailHtml(intro, link, buttonText),
+    }),
   });
 
-  const mail = {
-    from: `"${EMAIL_FROM_NAME || "Typeify"}" <${EMAIL_FROM || "noreply@typeify.com"}>`,
-    to,
-    subject,
-    text: `${intro.replace(/<[^>]*>/g, "")} Link: ${link}. It expires in 10 minutes.`,
-    html: emailHtml(intro, link, buttonText),
-  };
-
-  try {
-    const info = await transporter.sendMail(mail);
-    console.log("Email sent! Preview URL: %s", nodemailer.getTestMessageUrl(info));
-  } catch (error) {
-    console.error("Email service failed:", error);
-    throw error;
+  if (!res.ok) {
+    const detail = await res.text().catch(() => "");
+    throw new Error(`Brevo send failed (${res.status}): ${detail}`);
   }
 };
 
