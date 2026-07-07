@@ -25,7 +25,9 @@ const send = async ({ to, subject, intro, link, buttonText }) => {
 
   const transporter = nodemailer.createTransport({
     host: BREVO_SMTP_HOST,
-    port: BREVO_SMTP_PORT,
+    port: Number(BREVO_SMTP_PORT) || 587,
+    secure: Number(BREVO_SMTP_PORT) === 465, // true for 465, false for 587
+    connectionTimeout: 10000, // fail after 10 seconds instead of hanging forever
     auth: {
       user: BREVO_SMTP_USER,
       pass: BREVO_SMTP_PASS,
