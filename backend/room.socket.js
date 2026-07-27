@@ -46,6 +46,35 @@ function makeCode() {
   return Math.random().toString(36).substring(2, 8).toUpperCase();
 }
 
+// A fresh player entry for a newly joined socket.
+function makePlayer(userId, username) {
+  return {
+    userId,
+    username,
+    progress: 0,
+    wpm: 0,
+    accuracy: 100,
+    finished: false,
+    finishTime: null,
+    isReady: false,
+    wantsRematch: false,
+  };
+}
+
+// Reset a player's live race metrics between races. Pass resetLobby=true to
+// also clear the ready / rematch flags (used when returning to the lobby).
+function resetPlayer(player, resetLobby = false) {
+  player.progress = 0;
+  player.wpm = 0;
+  player.accuracy = 100;
+  player.finished = false;
+  player.finishTime = null;
+  if (resetLobby) {
+    player.isReady = false;
+    player.wantsRematch = false;
+  }
+}
+
 function serializeRoom(room) {
   return {
     code: room.code,
@@ -174,17 +203,7 @@ export function initSocket(httpServer) {
           rematchTimer: null,
         };
 
-        room.players.set(socket.id, {
-          userId,
-          username,
-          progress: 0,
-          wpm: 0,
-          accuracy: 100,
-          finished: false,
-          finishTime: null,
-          isReady: false,
-          wantsRematch: false,
-        });
+        room.players.set(socket.id, makePlayer(userId, username));
 
         rooms.set(code, room);
         socket.join(code);
@@ -207,17 +226,7 @@ export function initSocket(httpServer) {
         return;
       }
 
-      room.players.set(socket.id, {
-        userId,
-        username,
-        progress: 0,
-        wpm: 0,
-        accuracy: 100,
-        finished: false,
-        finishTime: null,
-        isReady: false,
-        wantsRematch: false,
-      });
+      room.players.set(socket.id, makePlayer(userId, username));
 
       socket.join(room.code);
       socket.data.roomCode = room.code;
@@ -238,14 +247,6 @@ export function initSocket(httpServer) {
     });
 
     // ── START RACE (host only) ──────────────────────────────
-    socket.on("disconnect", () => {
-      const room = rooms.get(socket.data.roomCode);
-      if (room) {
-        room.players.delete(socket.id);
-        room.scores?.delete(socket.id);
-      }
-    });
-    
     socket.on("start-race", async () => {
       const room = rooms.get(socket.data.roomCode);
       if (!room) return;
@@ -299,13 +300,7 @@ export function initSocket(httpServer) {
       
       room.status = "countdown";
       
-      room.players.forEach((p) => {
-        p.progress = 0;
-        p.wpm = 0;
-        p.accuracy = 100;
-        p.finished = false;
-        p.finishTime = null;
-      });
+      room.players.forEach((p) => resetPlayer(p));
 
       // Emit countdown phase
       io.to(room.code).emit("race-countdown", serializeRoom(room));
@@ -412,15 +407,7 @@ export function initSocket(httpServer) {
           r.status = "waiting";
           r.words = "";
           r.startedAt = null;
-          r.players.forEach((p) => {
-            p.progress = 0;
-            p.wpm = 0;
-            p.accuracy = 100;
-            p.finished = false;
-            p.finishTime = null;
-            p.isReady = false;
-            p.wantsRematch = false;
-          });
+          r.players.forEach((p) => resetPlayer(p, true));
           io.to(r.code).emit("room-updated", serializeRoom(r));
         }
       }, 15000);

@@ -14,6 +14,12 @@ const scoreSchema = new mongoose.Schema(
       required: false, // ✅ fixed: words mode sends null
     },
 
+    wordCount: {
+      type: Number,
+      enum: [10, 25, 50, 100],
+      required: false,
+    },
+
     mode: {
       type: String,
       enum: ["time", "words"],

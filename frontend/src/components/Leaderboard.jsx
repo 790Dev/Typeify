@@ -4,10 +4,13 @@ import { motion, AnimatePresence } from "framer-motion";
 import { getLeaderboard } from "../services/score.api";
 import { useAuth } from "../context/AuthContext";
 
-const FILTERS = [15, 30, 60, 120];
+const TIME_FILTERS = [15, 30, 60, 120];
+const WORDS_FILTERS = [10, 25, 50, 100];
 
 const Leaderboard = () => {
+  const [mode, setMode] = useState("time");
   const [selectedDuration, setSelectedDuration] = useState(15);
+  const [selectedWordCount, setSelectedWordCount] = useState(25);
   const [data, setData] = useState([]);
   const [personalRank, setPersonalRank] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -20,7 +23,8 @@ const Leaderboard = () => {
       setLoading(true);
       setError(null);
       try {
-        const result = await getLeaderboard(selectedDuration);
+        const metricValue = mode === "time" ? selectedDuration : selectedWordCount;
+        const result = await getLeaderboard(mode, metricValue);
         // Backend now returns { leaderboard, currentUserRank }
         if (result.leaderboard) {
           setData(result.leaderboard);
@@ -37,7 +41,7 @@ const Leaderboard = () => {
       }
     };
     fetchData();
-  }, [selectedDuration]);
+  }, [mode, selectedDuration, selectedWordCount]);
 
   return (
     <div
@@ -46,22 +50,37 @@ const Leaderboard = () => {
     >
       {/* ── Sidebar ── */}
       <div className="w-56 shrink-0 py-8 px-4 flex flex-col gap-2">
-        <p className="text-sub-alt text-xs uppercase tracking-widest mb-4 px-2">
-          Duration
-        </p>
-        {FILTERS.map((time) => (
+        <div className="flex bg-surface-2 rounded-lg p-1 mb-4">
           <button
-            key={time}
-            onClick={() => setSelectedDuration(time)}
+            className={`flex-1 py-1 text-sm font-semibold rounded-md transition-colors ${mode === "time" ? "bg-accent text-[#0e1116]" : "text-sub-alt hover:text-text"}`}
+            onClick={() => setMode("time")}
+          >
+            Time
+          </button>
+          <button
+            className={`flex-1 py-1 text-sm font-semibold rounded-md transition-colors ${mode === "words" ? "bg-accent text-[#0e1116]" : "text-sub-alt hover:text-text"}`}
+            onClick={() => setMode("words")}
+          >
+            Words
+          </button>
+        </div>
+
+        <p className="text-sub-alt text-xs uppercase tracking-widest mb-4 px-2">
+          {mode === "time" ? "Duration" : "Word Count"}
+        </p>
+        {(mode === "time" ? TIME_FILTERS : WORDS_FILTERS).map((val) => (
+          <button
+            key={val}
+            onClick={() => mode === "time" ? setSelectedDuration(val) : setSelectedWordCount(val)}
             className={`flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-semibold transition-all duration-150 w-full text-left
               ${
-                selectedDuration === time
+                (mode === "time" ? selectedDuration : selectedWordCount) === val
                   ? "bg-accent text-[#0e1116]"
                   : "text-sub-alt hover:bg-surface-2 hover:text-text"
               }`}
           >
-            <span>🕐</span>
-            time {time}
+            <span>{mode === "time" ? "🕐" : "📝"}</span>
+            {mode === "time" ? "time " : "words "} {val}
           </button>
         ))}
       </div>
@@ -73,7 +92,7 @@ const Leaderboard = () => {
       >
         {/* Title */}
         <h1 className="text-2xl font-bold text-text mb-8 tracking-wide">
-          All-time English Time {selectedDuration} Leaderboard
+          All-time English {mode === "time" ? `Time ${selectedDuration}` : `Words ${selectedWordCount}`} Leaderboard
         </h1>
 
         {/* Loading */}
@@ -112,12 +131,12 @@ const Leaderboard = () => {
                   animate={{ opacity: 1 }}
                   className="text-center text-sub-alt py-32 text-sm"
                 >
-                  No scores yet for {selectedDuration}s — be the first! 🏆
+                  No scores yet for {mode === "time" ? `${selectedDuration}s` : `${selectedWordCount} words`} — be the first! 🏆
                 </motion.div>
               ) : (
                 data.map((entry, index) => (
                   <motion.div
-                    key={entry._id}
+                    key={entry._id || index}
                     initial={{ opacity: 0, y: 6 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: index * 0.04 }}
@@ -206,7 +225,7 @@ const Leaderboard = () => {
                 className="mt-6 pt-4 text-sub-alt text-xs flex justify-between border-t border-border"
               >
                 <span>Showing top {data.length} results</span>
-                <span>time {selectedDuration}s · english</span>
+                <span>{mode === "time" ? `time ${selectedDuration}s` : `words ${selectedWordCount}`} · english</span>
               </div>
             )}
 

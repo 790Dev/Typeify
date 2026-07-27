@@ -37,7 +37,7 @@ const TypingChart = ({
   selectedWordCount,
   mistakes = {},
 }) => {
-  const { user, isAuthenticated, setShowAuthModal } = useAuth();
+  const { isAuthenticated, setShowAuthModal } = useAuth();
   const { isLightMode } = useTheme();
   const safeWpmData = wpmData || [];
 

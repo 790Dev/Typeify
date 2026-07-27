@@ -6,8 +6,6 @@ const UseCountdownTimer = (seconds) => {
   const intervalRef = useRef(null);
 
   const startCountdown = useCallback(() => {
-    console.log("Starting countdown...");
-
     // Clear any existing interval
     if (intervalRef.current) {
       clearInterval(intervalRef.current);
@@ -26,24 +24,12 @@ const UseCountdownTimer = (seconds) => {
   }, [seconds, setTimeLeft]);
 
   const resetCountdown = useCallback(() => {
-    console.log("Resetting countdown");
-
     if (intervalRef.current) {
       clearInterval(intervalRef.current);
     }
 
     setTimeLeft(seconds);
   }, [seconds]);
-
-  const setCountdownTime = useCallback((newTime) => {
-    console.log("Setting countdown time to:", newTime);
-
-    if (intervalRef.current) {
-      clearInterval(intervalRef.current);
-    }
-
-    setTimeLeft(newTime);
-  }, []);
 
   useEffect(() => {
     // Reset timeLeft when seconds prop changes
@@ -59,7 +45,7 @@ const UseCountdownTimer = (seconds) => {
     };
   }, []);
 
-  return { timeLeft, startCountdown, resetCountdown, setCountdownTime };
+  return { timeLeft, startCountdown, resetCountdown };
 };
 
 export default UseCountdownTimer;

@@ -1,7 +1,3 @@
-export const formatPercentage = (percentage) => {
-  return percentage.toFixed(0) + "%";
-};
-
 export const isKeyboardCodeAllowed = (code) => {
   return (
     code.startsWith("Key") ||

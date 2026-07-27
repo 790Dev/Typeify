@@ -2,8 +2,8 @@ import { API_BASE } from "../config";
 
 const API_URL = `${API_BASE}/api/v1/scores`;
 
-export const getLeaderboard = async (duration) => {
-  const res = await fetch(`${API_URL}?duration=${duration}`);
+export const getLeaderboard = async (mode, value) => {
+  const res = await fetch(`${API_URL}?mode=${mode}&value=${value}`);
   const data = await res.json();
   if (!res.ok) throw new Error(data.message || "Failed to fetch leaderboard");
   return data.data; // Array of scores

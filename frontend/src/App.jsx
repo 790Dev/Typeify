@@ -89,16 +89,17 @@ const TypingTest = () => {
         raw: totalTyped,
         consistency,
         duration: mode === "time" ? selectedTime : null,
+        wordCount: mode === "words" ? selectedWordCount : null,
         mode,
         language: "english",
         mistakes,
       };
 
-      saveScore(scorePayload, token)
-        .then(() => console.log("Score saved ✅"))
-        .catch((err) => console.error("Score save failed:", err));
+      saveScore(scorePayload, token).catch((err) =>
+        console.error("Score save failed:", err),
+      );
     }
-  }, [state, isAuthenticated, finalWpm, formattedAccuracy, totalTyped, consistency, mode, selectedTime, token, mistakes]);
+  }, [state, isAuthenticated, finalWpm, formattedAccuracy, totalTyped, consistency, mode, selectedTime, selectedWordCount, token, mistakes]);
 
   const handleRestart = () => {
     hasSavedScore.current = false;

@@ -10,9 +10,7 @@ import { fileURLToPath } from "url";
 import { initSocket } from "./room.socket.js";
 import { connectRedis } from "./config/redis.js";
 
-// Some systems (e.g. macOS with only an IPv6 link-local resolver in
-// /etc/resolv.conf) leave Node's c-ares unable to resolve MongoDB Atlas
-// SRV records, causing querySrv ECONNREFUSED. Fall back to public DNS.
+
 dns.setServers(["8.8.8.8", "1.1.1.1", ...dns.getServers()]);
 
 const __filename = fileURLToPath(import.meta.url);
@@ -55,7 +53,7 @@ app.use("/api/v1/coach", coachRouter);
 
 // Global Error Handler
 app.use((err, req, res, next) => {
-  console.error("🚨 Global Error Handler Caught:", err.message);
+  console.error("Global Error Handler Caught:", err.message);
   
   const statusCode = err.statusCode || 500;
   res.status(statusCode).json({
