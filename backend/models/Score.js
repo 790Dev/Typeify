@@ -11,7 +11,7 @@ const scoreSchema = new mongoose.Schema(
     duration: {
       type: Number,
       enum: [15, 30, 60, 120],
-      required: false, // ✅ fixed: words mode sends null
+      required: false,
     },
 
     wordCount: {
@@ -23,7 +23,7 @@ const scoreSchema = new mongoose.Schema(
     mode: {
       type: String,
       enum: ["time", "words"],
-      required: true, // ✅ added: track which mode the score was from
+      required: true,
     },
 
     wpm: {

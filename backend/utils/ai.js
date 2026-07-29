@@ -1,5 +1,3 @@
-// AI typing-passage generation via Groq (free, fast — Llama models).
-// Get a free API key at https://console.groq.com/keys
 
 const MODEL = process.env.GROQ_MODEL || "llama-3.1-8b-instant";
 
@@ -9,10 +7,7 @@ const DIFFICULTY_HINT = {
   hard: "Use longer, less common, and more sophisticated vocabulary.",
 };
 
-/**
- * Generate a typing-test passage with Groq.
- * Returns a single lowercase string of space-separated words.
- */
+
 export const generateTypingText = async ({
   count = 30,
   topic = "",
@@ -138,8 +133,7 @@ export const generateCoaching = async (stats = {}) => {
     `Accuracy: ${accuracy}%`,
     `Consistency: ${consistency}%`,
     `Characters typed: ${raw}, errors: ${errors}`,
-    `Mode: ${mode}${
-      mode === "time" ? ` (${duration}s)` : ` (${wordCount} words)`
+    `Mode: ${mode}${mode === "time" ? ` (${duration}s)` : ` (${wordCount} words)`
     }`,
     series ? `WPM over time (per second): ${series}` : "",
     topMistakes.length > 0 ? `Historically struggles with characters: ${topMistakes.join(", ")}` : "",
@@ -152,7 +146,7 @@ export const generateCoaching = async (stats = {}) => {
 
   const content = await groqChat(system, user, { temperature: 0.7 });
 
-  // Parse a JSON array out of the response; fall back to line splitting.
+
   const match = content.match(/\[[\s\S]*\]/);
   if (match) {
     try {
@@ -161,7 +155,6 @@ export const generateCoaching = async (stats = {}) => {
         return arr.map((t) => String(t).trim()).filter(Boolean).slice(0, 4);
       }
     } catch {
-      /* fall through to line splitting */
     }
   }
 

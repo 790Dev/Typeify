@@ -213,7 +213,7 @@ const resendEmailVerification = asyncHandler(async (req, res) => {
 
   user.emailVerificationToken = hashedToken;
   user.emailVerificationExpiry = tokenExpiry;
-  user.unverifiedAccountExpiresAt = new Date(Date.now() + 5 * 60 * 1000); // give them 5 more minutes
+  user.unverifiedAccountExpiresAt = new Date(Date.now() + 5 * 60 * 1000); //  5 minutes
 
   await user.save({ validateBeforeSave: false });
 

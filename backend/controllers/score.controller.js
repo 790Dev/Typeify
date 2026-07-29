@@ -22,7 +22,7 @@ const saveScore = asyncHandler(async (req, res) => {
   };
 
   const score = await Score.create(scoreData);
-  
+
   if (!score) {
     throw new ApiError(500, "Failed to save score");
   }
@@ -33,7 +33,7 @@ const saveScore = asyncHandler(async (req, res) => {
     try {
       const redisKey = `leaderboard:${mode}:${metric}`;
       const userIdStr = req.user._id.toString();
-      
+
       const currentRedisScore = await redisClient.zScore(redisKey, userIdStr);
       if (currentRedisScore === null || wpm > currentRedisScore) {
         await redisClient.zAdd(redisKey, { score: wpm, value: userIdStr });
@@ -74,14 +74,14 @@ const getLeaderboard = asyncHandler(async (req, res) => {
   try {
     // 1. Fetch top 10 from Redis
     const topUsers = await redisClient.zRangeWithScores(redisKey, 0, 9, { REV: true });
-    
+
     if (topUsers.length > 0) {
       const userIds = topUsers.map(u => u.value);
-      
+
       const users = await User.find({ _id: { $in: userIds } }).select("username _id");
-      
+
       const userObjIds = userIds.map(id => new mongoose.Types.ObjectId(id));
-      
+
       const matchCondition = { userId: { $in: userObjIds } };
       if (mode === "time") {
         matchCondition.duration = value;
@@ -94,12 +94,12 @@ const getLeaderboard = asyncHandler(async (req, res) => {
         { $sort: { wpm: -1 } },
         { $group: { _id: "$userId", accuracy: { $first: "$accuracy" }, createdAt: { $first: "$createdAt" } } }
       ]);
-      
-      // 3. Map back to ordered array
+
+      // Map back to ordered array
       leaderboard = topUsers.map(redisUser => {
         const userDoc = users.find(u => u._id.toString() === redisUser.value);
         const scoreDoc = scoreDocs.find(s => s._id.toString() === redisUser.value);
-        
+
         return {
           wpm: redisUser.score,
           accuracy: scoreDoc ? scoreDoc.accuracy : 100,
@@ -112,14 +112,13 @@ const getLeaderboard = asyncHandler(async (req, res) => {
       });
     }
 
-    // 4. Fetch personal rank
+    // Fetch personal rank
     if (userIdStr) {
       const rank = await redisClient.zRank(redisKey, userIdStr, { REV: true });
       if (rank !== null) {
         const score = await redisClient.zScore(redisKey, userIdStr);
         currentUserRank = {
-          rank: rank + 1, // 0-indexed
-          wpm: score
+          rank: rank + 1,
         };
       }
     }
