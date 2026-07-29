@@ -14,7 +14,6 @@ import VerifyEmail from "./components/Auth/VerifyEmail";
 import ResetPassword from "./components/Auth/ResetPassword";
 
 import UseEngine from "../hooks/UseEngine";
-import { calculateAccuracyPercentage } from "../utilty/helper";
 import { useAuth } from "./context/AuthContext";
 import { saveScore } from "./services/score.api";
 
@@ -41,9 +40,10 @@ const TypingTest = () => {
     words,
     timeLeft,
     typed,
-    errors,
     restart,
-    totalTyped,
+    rawKeystrokes,
+    wrongKeystrokes,
+    accuracy,
     wpmHistory,
     loading,
     inputRef,
@@ -62,8 +62,7 @@ const TypingTest = () => {
     .split(/\s+/)
     .filter((w) => w.length > 0).length;
 
-  const accuracyPercentage = calculateAccuracyPercentage(errors, totalTyped);
-  const formattedAccuracy = accuracyPercentage.toFixed(2);
+  const formattedAccuracy = accuracy.toFixed(2);
 
   const finalWpm =
     wpmHistory.length > 0 ? wpmHistory[wpmHistory.length - 1].wpm : 0;
@@ -86,7 +85,7 @@ const TypingTest = () => {
       const scorePayload = {
         wpm: Math.round(finalWpm),
         accuracy: Number(formattedAccuracy),
-        raw: totalTyped,
+        raw: rawKeystrokes,
         consistency,
         duration: mode === "time" ? selectedTime : null,
         wordCount: mode === "words" ? selectedWordCount : null,
@@ -99,7 +98,7 @@ const TypingTest = () => {
         console.error("Score save failed:", err),
       );
     }
-  }, [state, isAuthenticated, finalWpm, formattedAccuracy, totalTyped, consistency, mode, selectedTime, selectedWordCount, token, mistakes]);
+  }, [state, isAuthenticated, finalWpm, formattedAccuracy, rawKeystrokes, consistency, mode, selectedTime, selectedWordCount, token, mistakes]);
 
   const handleRestart = () => {
     hasSavedScore.current = false;
@@ -207,8 +206,8 @@ const TypingTest = () => {
         <div className="view-enter">
           <TypingChart
             wpmData={wpmHistory}
-            errors={errors}
-            totalTyped={totalTyped}
+            errors={wrongKeystrokes}
+            totalTyped={rawKeystrokes}
             accuracy={parseFloat(formattedAccuracy)}
             consistency={consistency}
             onRestart={handleRestart}

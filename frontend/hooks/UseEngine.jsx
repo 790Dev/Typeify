@@ -15,6 +15,10 @@ const useEngine = (
   const { showAuthModal } = useAuth();
   const [state, setState] = useState("start");
   const [errors, setErrors] = useState(0);
+  // Cumulative keystroke counters — every character typed counts, so mistakes
+  // that are later corrected still count against accuracy (like a real test).
+  const [rawKeystrokes, setRawKeystrokes] = useState(0);
+  const [wrongKeystrokes, setWrongKeystrokes] = useState(0);
   const [wpmHistory, setWpmHistory] = useState([]);
 
   const wordCount = mode === "words" ? selectedValue : 40;
@@ -84,13 +88,17 @@ const useEngine = (
     correctCharsRef.current = Math.max(0, totalTyped - currentErrors);
   }, [typed, words, cursor, totalTyped]);
 
-  // Track specific character mistakes for AI coaching
+  // Count every inserted character for cumulative accuracy + AI coaching.
+  // Fires once per newly typed character (totalTyped only grows on insert),
+  // so a wrong key still counts even if the user backspaces and fixes it.
   useEffect(() => {
     if (totalTyped > prevTotalTypedRef.current) {
       // User typed a new character
       const insertedChar = typed[typed.length - 1];
       const expectedChar = words[cursor - 1];
+      setRawKeystrokes((n) => n + 1);
       if (insertedChar !== expectedChar && expectedChar) {
+        setWrongKeystrokes((n) => n + 1);
         const key = expectedChar.toLowerCase();
         // Ignore spaces for the AI coach tracker
         if (key !== " " && key !== "\n") {
@@ -141,10 +149,14 @@ const useEngine = (
     resetCountdown();
     resetTotalTyped();
     setErrors(0);
+    setRawKeystrokes(0);
+    setWrongKeystrokes(0);
     setState("start");
     setWpmHistory([]);
     correctCharsRef.current = 0;
     startTimeRef.current = null;
+    prevTotalTypedRef.current = 0;
+    mistakesHistoryRef.current = {};
     updateWords();
     clearTyped();
   }, [resetCountdown, resetTotalTyped, updateWords, clearTyped]);
@@ -162,7 +174,9 @@ const useEngine = (
     ai.difficulty,
   ]);
 
-  const accuracy = calculateAccuracyPercentage(errors, totalTyped);
+  // Accuracy = correct keystrokes / total keystrokes (cumulative, so
+  // corrected mistakes still count — matches how typing tests measure it).
+  const accuracy = calculateAccuracyPercentage(wrongKeystrokes, rawKeystrokes);
 
   return {
     state,
@@ -171,6 +185,8 @@ const useEngine = (
     typed,
     errors,
     totalTyped,
+    rawKeystrokes,
+    wrongKeystrokes,
     restart,
     wpmHistory,
     accuracy,
