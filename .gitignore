@@ -8,3 +8,5 @@ build/
 dist/
 .env
 .DS_Store
+
+backend/readme.txt
