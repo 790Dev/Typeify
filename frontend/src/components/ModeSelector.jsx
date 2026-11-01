@@ -95,6 +95,7 @@ const ModeSelector = ({
   };
 
   const handleKeyDown = (e) => {
+    e.stopPropagation();
     if (e.key === "Enter") {
       e.preventDefault();
       commitTopic(customInput);

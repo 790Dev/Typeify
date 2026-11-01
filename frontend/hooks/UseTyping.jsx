@@ -68,8 +68,19 @@ const UseTyping = (enabled) => {
   // fire on an empty input). Letter inserts are left to beforeinput so they
   // aren't double-counted when the input is focused.
   const keydownHandler = useCallback(
-    ({ key, code }) => {
+    (e) => {
       if (!enabled) return;
+
+      // Ignore keystrokes when the user is typing into any other input or textarea (e.g. custom topic input)
+      const activeEl = document.activeElement;
+      const target = e.target;
+      const isOtherInput =
+        (activeEl && activeEl !== inputRef.current && (activeEl.tagName === "INPUT" || activeEl.tagName === "TEXTAREA" || activeEl.isContentEditable)) ||
+        (target && target !== inputRef.current && (target.tagName === "INPUT" || target.tagName === "TEXTAREA" || target.isContentEditable));
+
+      if (isOtherInput) return;
+
+      const { key, code } = e;
 
       if (key === "Backspace") {
         // Skip if a beforeinput delete just handled this press.
@@ -99,9 +110,21 @@ const UseTyping = (enabled) => {
   }, []);
 
   // Keep the hidden input focused so the keyboard stays open while a test
-  // is active. Re-focus on blur unless typing is disabled (finished/modal).
+  // is active. Never steal focus if the user is typing into another input (e.g. custom topic).
   const focusInput = useCallback(() => {
-    if (enabled && inputRef.current) inputRef.current.focus();
+    if (enabled && inputRef.current) {
+      const activeEl = document.activeElement;
+      if (
+        activeEl &&
+        activeEl !== inputRef.current &&
+        (activeEl.tagName === "INPUT" ||
+          activeEl.tagName === "TEXTAREA" ||
+          activeEl.isContentEditable)
+      ) {
+        return;
+      }
+      inputRef.current.focus();
+    }
   }, [enabled]);
 
   useEffect(() => {
