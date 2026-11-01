@@ -24,7 +24,9 @@ export const generateTypingText = async ({
 
   const prompt = [
     `Write a coherent passage of about ${wordCount} words for a typing-speed test.`,
-    topic ? `Theme: ${topic}.` : "Pick any engaging everyday theme.",
+    topic
+      ? `Topic: "${topic}". The entire passage MUST be specifically and explicitly about this topic.`
+      : "Pick any engaging everyday theme.",
     DIFFICULTY_HINT[difficulty] || DIFFICULTY_HINT.medium,
     includePunctuation
       ? "Include natural punctuation (commas, periods, question marks)."
@@ -46,8 +48,8 @@ export const generateTypingText = async ({
       body: JSON.stringify({
         model: getModel(),
         reasoning_effort: "low",
-        temperature: 1.0,
-        max_tokens: 1024,
+        temperature: 0.8,
+        max_tokens: 1500,
         messages: [
           {
             role: "system",

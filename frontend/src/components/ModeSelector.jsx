@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { FaAt, FaHashtag, FaClock, FaFont, FaMagic } from "react-icons/fa";
 
 const TOPICS = ["space", "nature", "history", "technology", "sports", "food"];
@@ -57,6 +57,54 @@ const ModeSelector = ({
   const counts = mode === "time" ? [15, 30, 60, 120] : [10, 25, 50, 100];
   const selectedCount = mode === "time" ? selectedTime : selectedWordCount;
   const onCountChange = mode === "time" ? onTimeChange : onWordCountChange;
+
+  const [customInput, setCustomInput] = useState(() =>
+    TOPICS.includes(aiTopic) ? "" : aiTopic || "",
+  );
+  const debounceTimerRef = useRef(null);
+
+  // Sync when a preset topic pill (e.g. space) is selected or external topic changes
+  useEffect(() => {
+    if (TOPICS.includes(aiTopic) || !aiTopic) {
+      setCustomInput("");
+    } else {
+      setCustomInput(aiTopic);
+    }
+  }, [aiTopic]);
+
+  const commitTopic = (val) => {
+    if (debounceTimerRef.current) {
+      clearTimeout(debounceTimerRef.current);
+    }
+    const trimmed = val.trim();
+    if (trimmed !== aiTopic) {
+      onAiTopicChange(trimmed);
+    }
+  };
+
+  const handleInputChange = (e) => {
+    const val = e.target.value;
+    setCustomInput(val);
+    if (debounceTimerRef.current) {
+      clearTimeout(debounceTimerRef.current);
+    }
+    // Debounce by 600ms so typing custom topics or sentences does not trigger mid-word
+    debounceTimerRef.current = setTimeout(() => {
+      commitTopic(val);
+    }, 600);
+  };
+
+  const handleKeyDown = (e) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      commitTopic(customInput);
+      e.target.blur();
+    }
+  };
+
+  const handleBlur = () => {
+    commitTopic(customInput);
+  };
 
   return (
     <div className="mb-10 flex flex-col items-center gap-3">
@@ -125,10 +173,13 @@ const ModeSelector = ({
             />
           ))}
           <input
-            value={TOPICS.includes(aiTopic) ? "" : aiTopic}
-            onChange={(e) => onAiTopicChange(e.target.value)}
-            placeholder="custom…"
-            className="w-24 rounded-md bg-surface-2 px-2 py-1 text-sm text-text placeholder-sub focus:outline-none focus:ring-1 focus:ring-accent/40"
+            value={customInput}
+            onChange={handleInputChange}
+            onKeyDown={handleKeyDown}
+            onBlur={handleBlur}
+            placeholder="custom… (enter)"
+            title="Type a custom topic or sentence and press Enter"
+            className="w-28 sm:w-44 focus:w-60 transition-all duration-200 rounded-md bg-surface-2 px-2.5 py-1 text-sm text-text placeholder-sub focus:outline-none focus:ring-1 focus:ring-accent/40"
           />
 
           <Divider />

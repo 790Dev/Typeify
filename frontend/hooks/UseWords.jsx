@@ -1,6 +1,5 @@
-import React from "react";
+import React, { useCallback, useState, useRef } from "react";
 import { faker } from "@faker-js/faker";
-import { useCallback, useState } from "react";
 import { generateText } from "../src/services/text.api";
 
 const generatedWords = (
@@ -48,19 +47,22 @@ const UseWords = (
     generatedWords(count, includePunctuation, includeNumbers),
   );
   const [loading, setLoading] = useState(false);
+  const requestIdRef = useRef(0);
 
   const local = useCallback(
     () => generatedWords(count, includePunctuation, includeNumbers),
     [count, includePunctuation, includeNumbers],
   );
 
-  // Build a fresh word set — from Claude when AI is enabled, otherwise faker.
-  // Falls back to faker if the AI request fails so the test never breaks.
+  // Build a fresh word set — from AI when enabled, otherwise faker.
+  // Uses requestIdRef to prevent race conditions from out-of-order in-flight requests.
   const buildWords = useCallback(async () => {
     if (!ai.enabled) {
       setWords(local());
       return;
     }
+
+    const currentId = ++requestIdRef.current;
     setLoading(true);
     try {
       const text = await generateText({
@@ -70,12 +72,18 @@ const UseWords = (
         includePunctuation,
         includeNumbers,
       });
-      setWords(text);
+      if (currentId === requestIdRef.current) {
+        setWords(text);
+      }
     } catch (err) {
-      console.error("AI text generation failed, falling back to offline words:", err);
-      setWords(local());
+      if (currentId === requestIdRef.current) {
+        console.error("AI text generation failed, falling back to offline words:", err);
+        setWords(local());
+      }
     } finally {
-      setLoading(false);
+      if (currentId === requestIdRef.current) {
+        setLoading(false);
+      }
     }
   }, [
     ai.enabled,
