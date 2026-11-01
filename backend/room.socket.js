@@ -139,7 +139,6 @@ function handleRaceOver(room, io) {
       io.to(r.code).emit("room-closed");
       
       // Kick all sockets and leave room
-      io.in(r.code).socketsJoin("kick"); 
       io.in(r.code).socketsLeave(r.code);
 
       rooms.delete(r.code);

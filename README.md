@@ -13,7 +13,7 @@ A full-stack typing speed application built for serious practice. Test yourself 
 - Post-test results screen with a WPM chart, accuracy, raw speed, consistency score, and per-character mistake breakdown
 
 ### AI Coaching
-- After every test, request an AI-generated analysis powered by Groq (Llama 3)
+- After every test, request an AI-generated analysis powered by Groq (GPT OSS 20B)
 - The AI receives your WPM series, accuracy, error count, and most-missed characters
 - Returns targeted, actionable tips specific to that session
 
@@ -55,7 +55,7 @@ A full-stack typing speed application built for serious practice. Test yourself 
 | Auth | JSON Web Tokens (access + refresh), bcrypt |
 | Database | MongoDB with Mongoose |
 | Cache and Realtime State | Redis (Upstash) |
-| AI | Groq API (Llama 3.1 8B) |
+| AI | Groq API (GPT OSS 20B) |
 | Email | Brevo SMTP (Nodemailer) |
 
 ---

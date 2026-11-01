@@ -11,7 +11,7 @@ import { initSocket } from "./room.socket.js";
 import { connectRedis } from "./config/redis.js";
 
 
-dns.setServers(["8.8.8.8", "1.1.1.1", ...dns.getServers()]);
+
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -26,9 +26,27 @@ app.use(express.urlencoded({ extended: true, limit: "16kb" }));
 app.use(express.static("public"));
 
 // CORS configuration
+const allowedOrigins = [
+  "http://localhost:5173",
+  "http://localhost:5174",
+  "http://localhost:3000",
+  "http://127.0.0.1:5173",
+  "http://127.0.0.1:5174",
+  ...(process.env.CORS_ORIGIN ? process.env.CORS_ORIGIN.split(",").map((s) => s.trim()) : []),
+];
+
 app.use(
   cors({
-    origin: process.env.CORS_ORIGIN?.split(",") || "http://localhost:5173",
+    origin: (origin, callback) => {
+      if (!origin) return callback(null, true);
+      if (
+        allowedOrigins.includes(origin) ||
+        /^http:\/\/(localhost|127\.0\.0\.1)(:\d+)?$/.test(origin)
+      ) {
+        return callback(null, true);
+      }
+      callback(null, true);
+    },
     credentials: true,
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
     allowedHeaders: ["Authorization", "Content-Type"],
@@ -54,7 +72,7 @@ app.use("/api/v1/coach", coachRouter);
 // Global Error Handler
 app.use((err, req, res, next) => {
   console.error("Global Error Handler Caught:", err.message);
-  
+
   const statusCode = err.statusCode || 500;
   res.status(statusCode).json({
     success: false,

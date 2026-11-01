@@ -71,7 +71,8 @@ const UseWords = (
         includeNumbers,
       });
       setWords(text);
-    } catch {
+    } catch (err) {
+      console.error("AI text generation failed, falling back to offline words:", err);
       setWords(local());
     } finally {
       setLoading(false);

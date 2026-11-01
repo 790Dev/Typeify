@@ -1,5 +1,5 @@
 
-const MODEL = process.env.GROQ_MODEL || "llama-3.1-8b-instant";
+const getModel = () => process.env.GROQ_MODEL || "openai/gpt-oss-20b";
 
 const DIFFICULTY_HINT = {
   easy: "Use only very common, short everyday words (3-6 letters).",
@@ -44,7 +44,8 @@ export const generateTypingText = async ({
         Authorization: `Bearer ${apiKey}`,
       },
       body: JSON.stringify({
-        model: MODEL,
+        model: getModel(),
+        reasoning_effort: "low",
         temperature: 1.0,
         max_tokens: 1024,
         messages: [
@@ -87,9 +88,10 @@ const groqChat = async (system, user, { temperature = 0.7 } = {}) => {
       Authorization: `Bearer ${apiKey}`,
     },
     body: JSON.stringify({
-      model: MODEL,
+      model: getModel(),
+      reasoning_effort: "low",
       temperature,
-      max_tokens: 512,
+      max_tokens: 1024,
       messages: [
         { role: "system", content: system },
         { role: "user", content: user },
